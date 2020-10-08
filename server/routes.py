@@ -12,7 +12,7 @@ import h5py
 from server.unity import *
 
 # load model
-datamodel = h5py.File("E:\\dev\\chicken-app\\api\\chicken.h5", "r")
+datamodel = h5py.File("./chicken.h5", "r")
 model = tf.keras.models.load_model(datamodel)
 checkChicken = tf.keras.applications.resnet50.ResNet50(weights='imagenet')
 
