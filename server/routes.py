@@ -381,11 +381,11 @@ def diaglogic():
     # load a single image
     name = f'{len(Post.query.all())+1}.jpg'
     photo = request.files["photo"]
-    photo.save(f'E:/dev/chicken-app/api/server/images/data/{name}')
+    photo.save(f'./server/images/data/{name}')
     
     print(f"image has saved with name {name}")
 
-    img = image.load_img(f'E:/dev/chicken-app/api/server/images/data/{name}', target_size=(224, 224))
+    img = image.load_img(f'./server/images/data/{name}', target_size=(224, 224))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
@@ -405,7 +405,7 @@ def diaglogic():
         res = {"success": False, "mgs": "Vui lòng chụp ảnh rõ hơn hoặc gần đối tượng để có được kết quả chính xác. Xin cám ơn!"}
         return jsonify(res)
 
-    new_image = load_image(f'E:/dev/chicken-app/api/server/images/data/{name}', 64)
+    new_image = load_image(f'./server/images/data/{name}', 64)
 
     # check prediction
     pred = model.predict(new_image)
