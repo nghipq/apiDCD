@@ -8,6 +8,10 @@
     src='//production-assets.codepen.io/assets/editor/live/css_live_reload_init-2c0dc5167d60a5af3ee189d570b1835129687ea2a61bee3513dee3a50c115a77.js'></script>
 <meta charset='UTF-8'>
 <meta name="robots" content="noindex">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
+</script>
+
+
 <link rel="shortcut icon" type="image/x-icon"
     href="//production-assets.codepen.io/assets/favicon/favicon-8ea04875e70c4b0bb41da869e81236e54394d63638a1ef12fa558a4a835f1164.ico" />
 <link rel="mask-icon" type=""
@@ -840,31 +844,25 @@
 
     </div>
     <div class="content">
-        <div class="contact-profile">
+        <div id="room_name" class="contact-profile">
             <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
             <p>Harley</p>
         </div>
-        <div class="messages">
-
+        <div id="messages" class="messages">
             <ul id="message-list">
-                <!--                 
-                <li class="replies">
-					<img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-					<p>When you're backed against the wall, break the god damn thing down.</p>
-				</li> -->
-
             </ul>
         </div>
-        <form onsubmit="return sendMessage();">
+        <div>
             <div class="message-input">
 
                 <div class="wrap">
                     <input type="text" id="messaage" placeholder="Enter Message" autocomplete="off">
                     <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
-                    <button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+                    <button class="submit" onclick="return sendMessage();"><i class="fa fa-paper-plane"
+                            aria-hidden="true"></i></button>
                 </div>
             </div>
-        </form>
+        </div>
 
 
     </div>
@@ -875,7 +873,6 @@
 
 <script
     src='//production-assets.codepen.io/assets/common/stopExecutionOnTimeout-b2a7b3fe212eaa732349046d8416e00a9dec26eb7fd347590fbced3ab38af52e.js'></script>
-<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
 <script>$(".messages").animate({ scrollTop: $(document).height() }, "fast");
 
     $("#profile-img").click(function () {
@@ -925,7 +922,6 @@
 
 
 <script>
-
     var firebaseConfig = {
         apiKey: "AIzaSyA5_MtEc-ff6ECQMSEyfjHbN6BvhNPX87w",
         authDomain: "poddsoft.firebaseapp.com",
@@ -940,6 +936,7 @@
     firebase.initializeApp(firebaseConfig);
 
     var checkAuth = () => {
+
         firebase.auth().onAuthStateChanged(user => {
             if (!user) {
                 firebase.auth().signInAnonymously()
@@ -966,18 +963,20 @@
             }
         })
 
+
+
+        loadRoom()
+        loadData()
         return false;
     }
 
     var roomList = []
     var roomtmp = []
-    var room_id = ""
-    var room_name = ""
 
-    var load = async () => {
-        await firebase.database().ref("messages").on("child_added", function (snapshot) {
+    var demoLoad = async () => {
+        firebase.database().ref("messages").on("child_added", function (snapshot) {
             var idx = roomtmp.indexOf(snapshot.val().room_id._id)
-            
+
             if (idx == -1) {
                 item = {
                     _id: snapshot.val().room_id._id,
@@ -992,21 +991,22 @@
             }
         })
 
-        loadRoom()
-        loadData(0)
+        await sleep(2000)
     }
+
+    var room_id = "1"
+    var room_name = "xuan"
 
     var loadRoom = () => {
         var x = 0
         var content = ""
-        console.log(roomList.length)
         roomList.forEach(item => {
             if (x == 0) {
                 content +=
-                    `<li class="contact active">`
+                    `<li class="contact active" id="${item._id}" onclick="changeRoom('${item._id}')">`
             } else {
                 content +=
-                    `<li class="contact active">`
+                    `<li class="contact" id="${item._id}" onclick="changeRoom('${item._id}')"> `
             }
 
             content +=
@@ -1019,16 +1019,17 @@
                         </div>
                     </div>
                 </li>`
+
+            x++;
         })
 
         document.getElementById("room_list").innerHTML = content
+        return true
     }
 
-
-    var loadData = idx => {
-        room_id = roomList[idx]._id
-        room_name = roomList[idx].name
-        roomList[idx].messages.forEach(item => {
+    var loadData = () => {
+        var messList = roomList.find(item => item._id == room_id)
+        var content = messList.messages.map(item => {
             var html = ""
 
             if (item.user.name == "admin") {
@@ -1041,12 +1042,40 @@
             html += item.content
             html += "</p>"
             html += "</li>"
-            document.getElementById("message-list").innerHTML += html;
-            document.getElementById('messaage').value = ''
+
+            return html
         })
+        document.getElementById("message-list").innerHTML = content.join('');
+        document.getElementById('messaage').value = ''
+        document.getElementsByClassName("contact active")[0].classList.remove("active")
+        document.getElementById(room_id).classList.add("active")
+        document.getElementById("room_name").innerHTML = `
+            <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
+            <p>${room_name}</p>
+        `
+
+        let messages = document.getElementById("messages")
+        messages.scrollTop = messages.scrollHeight
+
+        return true
+    }
+
+    var changeRoom = (id) => {
+        var messList = roomList.find(item => item._id == id)
+        room_id = messList._id
+        room_name = messList.name
+
+        loadData()
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     checkAuth()
-    load()
+    demoLoad().then(() => {
+        loadRoom()
+        loadData()
+    })
 </script>
 {% endblock content %}
